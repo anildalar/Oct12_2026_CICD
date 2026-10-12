@@ -24,7 +24,22 @@ pipeline{
     }
     stage(' Deploy on Production Server '){
       steps{
-          sh "ssh -o StrictHostKeyChecking=no root@103.216.171.220 docker run  -p 3000:80 -d oklabs/myimage:t9"
+          sh '''
+            ssh -o StrictHostKeyChecking=no root@103.216.171.220 '
+                if ! systemctl is-active --quiet docker; then
+                    echo "Docker daemon is not running. Starting Docker..."
+                    systemctl start docker
+                fi
+
+                if ! systemctl is-active --quiet docker; then
+                    echo "ERROR: Docker daemon failed to start."
+                    exit 1
+                fi
+
+                echo "Docker daemon is running."
+                docker run -p 3000:80 -d oklabs/myimage:t9
+            '
+        '''
         
       }
     }
